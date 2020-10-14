@@ -28,6 +28,14 @@ function loadSBs(){
     SBs = JSON.parse(rawdata);
 }
 
+function saveSBs(){
+    fs.writeFile("sbs.json", JSON.stringify(SBs), (err) => {
+        if (err) {
+            console.log(err);
+        }
+    });
+}
+
 function checkPrefix(content, prefix=null){
     if(prefix === null){
         if(content.substring(0,3) === auth.prefix){
@@ -64,6 +72,17 @@ function leaveVoiceChat(){
     voiceChat.leave()
     voiceChat = null
     voiceConnection = null
+}
+
+function AddToSoundBoard(user, attachment, control){
+    if(SBs[user.id]){
+        SBs[user.id][control] = attachment.proxyURL;
+    }else{
+        SBs[user.id] = {
+            [control]: attachment.proxyURL
+        };
+    }
+    saveSBs();
 }
 
 bot.on('message', async message => {
@@ -107,14 +126,19 @@ bot.on('message', async message => {
             if(message.attachments === undefined || message.attachments.size === 0){
                 return
             } else {
-                message.attachments.map(attachment => {
-                    if(attachment.name.includes(".wav") || attachment.name.includes(".mp3")){
-                        console.log(message);
-                    } else {
-                        return;
-                    }
-                })
-                return
+                var args = message.content.split(" ")
+                if(args[1].length > 1){
+                    message.channel.send("Ghazel buttuna wahda ghal soundboard bro.");
+                    return;
+                }else{
+                    message.attachments.map(attachment => {
+                        if(attachment.name.includes(".wav") || attachment.name.includes(".mp3")){
+                            AddToSoundBoard(message.author,attachment, args[1]);
+                        } else {
+                            return;
+                        }
+                    })
+                }
             }
         
         } 
